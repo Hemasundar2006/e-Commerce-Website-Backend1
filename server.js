@@ -11,13 +11,45 @@ connectDB();
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://e-commerce-gilt-xi.vercel.app'],
+  origin: [
+    'http://localhost:3000', 
+    'https://lakshmiservices.netlify.app',
+    'https://e-commerce-gilt-xi.vercel.app',
+    'https://e-commerce-gilt-xi.vercel.app/'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  optionsSuccessStatus: 200 // For legacy browser support
+}));
+
+// Handle preflight OPTIONS requests explicitly
+app.options('*', cors({
+  origin: [
+    'http://localhost:3000', 
+    'https://lakshmiservices.netlify.app',
+    'https://e-commerce-gilt-xi.vercel.app',
+    'https://e-commerce-gilt-xi.vercel.app/'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
+
 app.use(express.json());
 
 // Serve static files (uploaded images)
 app.use('/uploads', express.static('uploads'));
+
+// Health check route
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV,
+    mongoUri: process.env.MONGODB_URI ? 'Set' : 'Not set'
+  });
+});
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
