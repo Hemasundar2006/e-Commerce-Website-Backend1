@@ -10,7 +10,10 @@ const app = express();
 connectDB();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:3000', 'https://e-commerce-gilt-xi.vercel.app'],
+  credentials: true
+}));
 app.use(express.json());
 
 // Serve static files (uploaded images)
