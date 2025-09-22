@@ -68,7 +68,14 @@ exports.getProduct = async (req, res, next) => {
 // @access  Private/Admin
 exports.createProduct = async (req, res, next) => {
   try {
-    const product = await Product.create(req.body);
+    let productData = req.body;
+
+    // Handle uploaded images
+    if (req.files && req.files.length > 0) {
+      productData.images = req.files.map(file => `/uploads/products/${file.filename}`);
+    }
+
+    const product = await Product.create(productData);
 
     res.status(201).json({
       success: true,
@@ -90,7 +97,14 @@ exports.updateProduct = async (req, res, next) => {
       return next(new ErrorResponse('Product not found', 404));
     }
 
-    product = await Product.findByIdAndUpdate(req.params.id, req.body, {
+    let updateData = req.body;
+
+    // Handle uploaded images
+    if (req.files && req.files.length > 0) {
+      updateData.images = req.files.map(file => `/uploads/products/${file.filename}`);
+    }
+
+    product = await Product.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
       runValidators: true
     });
