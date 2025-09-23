@@ -9,33 +9,39 @@ const app = express();
 // Connect to MongoDB
 connectDB();
 
-// Middleware
+// Allowed origins list
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'https://e-commerce-gilt-xi.vercel.app'
+];
+
+// Debug log for request origins
+app.use((req, res, next) => {
+  console.log('Request Origin:', req.headers.origin);
+  next();
+});
+
+// CORS middleware
 app.use(cors({
-  origin: [
-    'http://localhost:3000', 
-    'https://lakshmiservices.netlify.app',
-    'https://e-commerce-gilt-xi.vercel.app',
-    'https://e-commerce-gilt-xi.vercel.app/'
-  ],
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn('❌ Blocked by CORS:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   credentials: true,
-  optionsSuccessStatus: 200 // For legacy browser support
+  optionsSuccessStatus: 200
 }));
 
-// Handle preflight OPTIONS requests explicitly
-app.options('*', cors({
-  origin: [
-    'http://localhost:3000', 
-    'https://lakshmiservices.netlify.app',
-    'https://e-commerce-gilt-xi.vercel.app',
-    'https://e-commerce-gilt-xi.vercel.app/'
-  ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-}));
+// Handle preflight automatically
+app.options('*', cors());
 
+// Middleware
 app.use(express.json());
 
 // Serve static files (uploaded images)
@@ -46,30 +52,15 @@ app.get('/health', (req, res) => {
   res.json({
     status: 'OK',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV,
-    mongoUri: process.env.MONGODB_URI ? 'Set' : 'Not set'
+    environment: process.env.NODE_ENV_NAME || 'development'
   });
 });
-
-// Routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/products', require('./routes/products'));
-app.use('/api/cart', require('./routes/cart'));
-app.use('/api/orders', require('./routes/orders'));
-// Payments disabled for now (using Cash on Delivery)
-// app.use('/api/payment', require('./routes/payment'));
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error('❌ Error:', err.message);
   res.status(500).json({
     success: false,
-    error: err.message || 'Server Error'
+    error: err.message
   });
-});
-
-const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
 });
